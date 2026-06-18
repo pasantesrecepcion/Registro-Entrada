@@ -4,71 +4,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Recepción - Farmacorp</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>Farmacorp CEDIS - Registro de Ingreso</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --fc-blue: #0056b3;
+            --fc-blue-hover: #004085;
+            --bg-main: #f4f6f9;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .form-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 550px;
+            padding: 32px;
+            border-top: 6px solid var(--fc-blue);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            color: var(--fc-blue);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Fuerza visual de mayúsculas en los campos de escritura */
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-main);
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--fc-blue);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--fc-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--fc-blue-hover);
+        }
+
+        .btn-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            background: none;
+            border: 1px solid var(--fc-blue);
+            color: var(--fc-blue);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            margin-top: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-link:hover {
+            background-color: rgba(0, 86, 179, 0.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
-    <main class="main-content">
-        <div class="form-container">
-            <div class="form-header">
-                <h2>BIENVENIDOS</h2>
-                <p>Por favor, registre su ingreso a las instalaciones.</p>
-            </div>
-            <form id="recepcionForm">
-                <div class="form-group">
-                    <label for="nombre">Nombre Completo</label>
-                    <input type="text" id="nombre" name="nombre" required placeholder="EJ. JUAN PEREZ">
-                </div>
-                <div class="form-group">
-                    <label for="empresa">Empresa / Institución</label>
-                    <input type="text" id="empresa" name="empresa" required placeholder="EJ. FARMACORP SA">
-                </div>
-                <div class="form-group">
-                    <label for="ci">CI / Documento</label>
-                    <input type="text" id="ci" name="ci" required placeholder="NÚMERO DE DOCUMENTO">
-                </div>
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label for="personas">Personas</label>
-                        <input type="number" id="personas" name="personas" min="1" value="1" required>
-                    </div>
-                    <div class="form-group half">
-                        <label for="puerta">Puerta</label>
-                        <input type="number" id="puerta" name="puerta" min="1" max="10" value="1" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="areaDestino">Área Destino</label>
-                    <select id="areaDestino" name="areaDestino" required>
-                        <option value="" disabled selected>SELECCIONE EL ÁREA</option>
-                        <option value="LOGISTICA INVERSA">LOGÍSTICA INVERSA</option>
-                        <option value="RECEPCION">RECEPCIÓN</option>
-                        <option value="RRHH">RRHH</option>
-                        <option value="MANTENIMIENTO">MANTENIMIENTO</option>
-                        <option value="OTROS">OTROS</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="motivoVisita">Motivo de Visita</label>
-                    <select id="motivoVisita" name="motivoVisita" required>
-                        <option value="" disabled selected>SELECCIONE EL MOTIVO</option>
-                    </select>
-                </div>
-                <div class="form-group hidden" id="especifiqueMotivoGroup">
-                    <label for="motivoDetalle">Especifique el motivo de su visita</label>
-                    <textarea id="motivoDetalle" name="motivoDetalle" rows="2"
-                        placeholder="DETALLE EL MOTIVO DE SU VISITA AQUÍ..."></textarea>
-                </div>
-                <button type="submit" class="btn-submit">REGISTRAR ENTRADA</button>
-                <button type="button" class="btn-secondary" onclick="window.location.href='panel.html'">Ir al Panel de
-                    Gestión (Monitoreo)</button>
-            </form>
+
+    <div class="form-container">
+        <div class="header">
+            <h1>BIENVENIDOS</h1>
+            <p>Por favor, registre su ingreso a las instalaciones.</p>
         </div>
-    </main>
-    <script src="app.js"></script>
+
+        <form id="registroForm">
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" placeholder="EJ. JUAN PEREZ" required
+                    oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div class="form-group">
+                <label for="empresa">Empresa / Institución</label>
+                <input type="text" id="empresa" placeholder="EJ. FARMACORP S.A." required
+                    oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="documento">CI / Documento</label>
+                    <input type="text" id="documento" placeholder="NUMERO DE DOCUMENTO" required
+                        oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono / Celular</label>
+                    <input type="tel" id="telefono" placeholder="NUMERO DE CONTACTO" required
+                        oninput="this.value = this.value.toUpperCase()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="personas">Personas</label>
+                    <input type="number" id="personas" value="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="puerta">Puerta</label>
+                    <select id="puerta" required>
+                        <option value="" disabled selected>SELECCIONE LA PUERTA</option>
+                        <option value="PUERTA PRINCIPAL">PUERTA PRINCIPAL</option>
+                        <option value="PUERTA 1">PUERTA 1</option>
+                        <option value="PUERTA 2">PUERTA 2</option>
+                        <option value="PUERTA 3">PUERTA 3</option>
+                        <option value="PUERTA 4">PUERTA 4</option>
+                        <option value="PUERTA 5">PUERTA 5</option>
+                        <option value="PUERTA 6">PUERTA 6</option>
+                        <option value="PUERTA 7">PUERTA 7</option>
+                        <option value="PUERTA 8">PUERTA 8</option>
+                        <option value="PUERTA 9">PUERTA 9</option>
+                        <option value="PUERTA 10">PUERTA 10</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="area">Área Destino</label>
+                <select id="area" required>
+                    <option value="" disabled selected>SELECCIONE EL ÁREA</option>
+                    <option value="logistica_inversa">LOGÍSTICA INVERSA</option>
+                    <option value="recepcion">RECEPCIÓN</option>
+                    <option value="mantenimiento">MANTENIMIENTO</option>
+                    <option value="rrhh">RRHH</option>
+                    <option value="otros">OTROS</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="motivo">Motivo de Visita</label>
+                <select id="motivo" required disabled>
+                    <option value="" disabled selected>-- ELIJA ÁREA PRIMERO --</option>
+                </select>
+            </div>
+
+            <div class="form-group hidden" id="grupo-otros">
+                <label for="otro_motivo">Especifique el Motivo</label>
+                <textarea id="otro_motivo" rows="2" placeholder="DESCRIBA BREVEMENTE EL MOTIVO..."
+                    oninput="this.value = this.value.toUpperCase()"></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">Registrar Entrada</button>
+            <a href="panel.html" class="btn-link">
+                <i class="ph ph-chart-bar"></i> Ir al Panel de Gestión (Monitoreo)
+            </a>
+        </form>
+    </div>
+
+    <script>
+        // Mapeo dinámico de motivos según tu lista exacta
+        const motivosPorArea = {
+            logistica_inversa: [
+                { value: "NOTA DE CREDITO", text: "NOTA DE CRÉDITO" },
+                { value: "DEVOLUCIONES", text: "DEVOLUCIONES" },
+                { value: "OTROS", text: "OTROS" }
+            ],
+            recepcion: [
+                { value: "AGENDA DE ENTREGA", text: "AGENDA DE ENTREGA" },
+                { value: "ENTREGA DE FACTURA", text: "ENTREGA DE FACTURA" },
+                { value: "OTROS", text: "OTROS" }
+            ],
+            rrhh: [
+                { value: "FIRMA DE CONTRATO", text: "FIRMA DE CONTRATO" },
+                { value: "ENTREVISTA", text: "ENTREVISTA" },
+                { value: "OTROS", text: "OTROS" }
+            ],
+            mantenimiento: [
+                { value: "OTROS", text: "OTROS" }
+            ],
+            otros: [
+                { value: "OTROS", text: "OTROS" }
+            ]
+        };
+
+        const areaSelect = document.getElementById('area');
+        const motivoSelect = document.getElementById('motivo');
+        const grupoOtros = document.getElementById('grupo-otros');
+        const otroMotivoInput = document.getElementById('otro_motivo');
+
+        areaSelect.addEventListener('change', function () {
+            const areaSeleccionada = this.value;
+            motivoSelect.innerHTML = '<option value="" disabled selected>SELECCIONE EL MOTIVO</option>';
+
+            if (motivosPorArea[areaSeleccionada]) {
+                motivosPorArea[areaSeleccionada].forEach(motivo => {
+                    const opt = document.createElement('option');
+                    opt.value = motivo.value;
+                    opt.text = motivo.text;
+                    motivoSelect.appendChild(opt);
+                });
+                motivoSelect.disabled = false;
+            }
+
+            // Si el área elegida es "MANTENIMIENTO" u "OTROS", automáticamente tienen "OTROS" como opción única
+            if (areaSeleccionada === 'mantenimiento' || areaSeleccionada === 'otros') {
+                motivoSelect.value = "OTROS";
+                grupoOtros.classList.remove('hidden');
+                otroMotivoInput.required = true;
+            } else {
+                grupoOtros.classList.add('hidden');
+                otroMotivoInput.required = false;
+            }
+        });
+
+        motivoSelect.addEventListener('change', function () {
+            if (this.value === 'OTROS') {
+                grupoOtros.classList.remove('hidden');
+                otroMotivoInput.required = true;
+                otroMotivoInput.focus();
+            } else {
+                grupoOtros.classList.add('hidden');
+                otroMotivoInput.required = false;
+            }
+        });
+
+        // Simulación envío de formulario
+        document.getElementById('registroForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            alert('¡REGISTRO EXITOSO CON DATOS EN MAYÚSCULAS!');
+            this.reset();
+            motivoSelect.disabled = true;
+            grupoOtros.classList.add('hidden');
+        });
+    </script>
 </body>
 
 </html>
