@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Recepción - Farmacorp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main class="main-content">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>BIENVENIDOS</h2>
+                <p>Por favor, registre su ingreso a las instalaciones.</p>
+            </div>
+            <form id="recepcionForm">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo</label>
+                    <input type="text" id="nombre" name="nombre" required placeholder="EJ. JUAN PEREZ">
+                </div>
+                <div class="form-group">
+                    <label for="empresa">Empresa / Institución</label>
+                    <input type="text" id="empresa" name="empresa" required placeholder="EJ. FARMACORP SA">
+                </div>
+                <div class="form-group">
+                    <label for="ci">CI / Documento</label>
+                    <input type="text" id="ci" name="ci" required placeholder="NÚMERO DE DOCUMENTO">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="personas">Personas</label>
+                        <input type="number" id="personas" name="personas" min="1" value="1" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="puerta">Puerta</label>
+                        <input type="number" id="puerta" name="puerta" min="1" max="10" value="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="areaDestino">Área Destino</label>
+                    <select id="areaDestino" name="areaDestino" required>
+                        <option value="" disabled selected>SELECCIONE EL ÁREA</option>
+                        <option value="LOGISTICA INVERSA">LOGÍSTICA INVERSA</option>
+                        <option value="RECEPCION">RECEPCIÓN</option>
+                        <option value="RRHH">RRHH</option>
+                        <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+                        <option value="OTROS">OTROS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="motivoVisita">Motivo de Visita</label>
+                    <select id="motivoVisita" name="motivoVisita" required>
+                        <option value="" disabled selected>SELECCIONE EL MOTIVO</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="especifiqueMotivoGroup">
+                    <label for="motivoDetalle">Especifique el motivo de su visita</label>
+                    <textarea id="motivoDetalle" name="motivoDetalle" rows="2"
+                        placeholder="DETALLE EL MOTIVO DE SU VISITA AQUÍ..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">REGISTRAR ENTRADA</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='panel.html'">Ir al Panel de
+                    Gestión (Monitoreo)</button>
+            </form>
+        </div>
+    </main>
+    <script src="app.js"></script>
+</body>
+
+</html>
