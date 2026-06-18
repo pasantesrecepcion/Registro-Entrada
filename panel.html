@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmacorp CEDIS - Panel de Gestión</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
@@ -60,7 +61,6 @@
             font-size: 14px;
         }
 
-        /* Dashboard Superior Layout */
         .dashboard-header {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -122,10 +122,9 @@
             font-size: 14px;
         }
 
-        /* Contenido Principal */
         .panels-grid {
             display: grid;
-            grid-template-columns: 3fr 2fr;
+            grid-template-columns: 1.3fr 1fr;
             gap: 24px;
         }
 
@@ -147,18 +146,125 @@
             min-height: 450px;
         }
 
-        /* Lista de Visitantes en Proceso (Inputs Editables) */
         .visitante-row {
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .card-header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 12px;
-            background: #fafafa;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .empresa-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--fc-blue);
+            text-transform: uppercase;
+        }
+
+        .hora-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .grid-datos-superficial {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .dato-item {
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .dato-item strong {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .input-editable {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text-main);
+            margin-top: 2px;
+        }
+
+        .input-editable:disabled {
+            background: transparent;
+            border-color: transparent;
+            padding: 0;
+            color: var(--text-main);
+            font-weight: 600;
+            resize: none;
+        }
+
+        .observaciones-container {
+            grid-column: span 2;
+            margin-top: 4px;
+        }
+
+        .textarea-obs {
+            width: 100%;
+            min-height: 40px;
+            font-family: inherit;
+        }
+
+        .row-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        /* Variaciones de botones */
+        .btn-edit-toggle {
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
+
+        .btn-edit-toggle:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: var(--fc-red);
+        }
+
+        .btn-delete:hover {
+            background: #fca5a5;
         }
 
         .visitante-fields {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1fr 0.6fr;
             gap: 8px;
             margin-bottom: 12px;
         }
@@ -169,6 +275,7 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: #fff;
+            text-transform: uppercase;
         }
 
         .row-actions {
@@ -200,7 +307,6 @@
             color: white;
         }
 
-        /* Tabla de Historial Corta */
         .history-table {
             width: 100%;
             border-collapse: collapse;
@@ -212,6 +318,7 @@
             padding: 10px;
             color: var(--text-muted);
             border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
         }
 
         .history-table td {
@@ -219,13 +326,8 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        .badge-out {
-            background: #fee2e2;
-            color: var(--fc-red);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 11px;
+        .text-uppercase {
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -240,16 +342,16 @@
     <div class="dashboard-header">
         <div class="kpis">
             <div class="card-kpi">
-                <h3>En Espera</h3>
-                <p id="kpi-espera">0</p>
+                <h3>Finalizado</h3>
+                <p id="kpi-finalizado">0</p>
             </div>
             <div class="card-kpi">
                 <h3>En Proceso</h3>
-                <p id="kpi-proceso">2</p>
+                <p id="kpi-proceso">0</p>
             </div>
             <div class="card-kpi">
                 <h3>Total Visitas Hoy</h3>
-                <p id="kpi-total">2</p>
+                <p id="kpi-total">0</p>
             </div>
         </div>
         <div class="filter-section">
@@ -259,43 +361,9 @@
     </div>
 
     <div class="panels-grid">
-
         <div class="main-panel">
             <div class="section-title"><i class="ph ph-clock"></i> Personal en Instalaciones</div>
             <div id="active-list">
-
-                <div class="visitante-row" id="vis-1">
-                    <div class="visitante-fields">
-                        <input type="text" value="JOSE RUBEN SOBREVILLA" title="Nombre Completo">
-                        <input type="text" value="ADELA JANETH MORENO" title="Empresa">
-                        <input type="text" value="78569045" title="Teléfono">
-                        <input type="number" value="1" title="Personas">
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn-action btn-ok" onclick="actualizarSupabase(1)"><i
-                                class="ph ph-floppy-disk"></i> Guardar</button>
-                        <button class="btn-action btn-fin"
-                            onclick="finalizarVisita(1, 'JOSE RUBEN SOBREVILLA', 'ADELA JANETH MORENO')"><i
-                                class="ph ph-check"></i> Finalizar</button>
-                    </div>
-                </div>
-
-                <div class="visitante-row" id="vis-2">
-                    <div class="visitante-fields">
-                        <input type="text" value="RAUL CALDERON" title="Nombre Completo">
-                        <input type="text" value="IMPORTADORA LOGMARK" title="Empresa">
-                        <input type="text" value="76310936" title="Teléfono">
-                        <input type="number" value="1" title="Personas">
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn-action btn-ok" onclick="actualizarSupabase(2)"><i
-                                class="ph ph-floppy-disk"></i> Guardar</button>
-                        <button class="btn-action btn-fin"
-                            onclick="finalizarVisita(2, 'RAUL CALDERON', 'IMPORTADORA LOGMARK')"><i
-                                class="ph ph-check"></i> Finalizar</button>
-                    </div>
-                </div>
-
             </div>
         </div>
 
@@ -306,50 +374,18 @@
                     <tr>
                         <th>Visita</th>
                         <th>Empresa</th>
-                        <th>Estado</th>
+                        <th>Inicio</th>
+                        <th>Finalizado</th>
+                        <th>Área Destino</th>
                     </tr>
                 </thead>
                 <tbody id="history-rows">
                 </tbody>
             </table>
         </div>
-
     </div>
 
-    <script>
-        // Establecer fecha de hoy por defecto en el filtro
-        document.getElementById('date-filter').valueAsDate = new Date();
-
-        // Lógica para Guardar/Editar cambios directos
-        function actualizarSupabase(id) {
-            alert(`Sincronizando con Supabase: Cambios guardados para el registro ID #${id}`);
-            // Aquí irá tu consulta: await supabase.from('visitas').update({...}).eq('id', id)
-        }
-
-        // Lógica para Finalizar Visita (Desaparece del panel y baja al historial)
-        function finalizarVisita(id, nombre, empresa) {
-            // Eliminar de la vista activa
-            const row = document.getElementById(`vis-${id}`);
-            if (row) row.remove();
-
-            // Agregar al historial lateral de forma limpia
-            const tbody = document.getElementById('history-rows');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><strong>${nombre}</strong></td>
-                <td>${empresa}</td>
-                <td><span class="badge-out">SALIDA</span></td>
-            `;
-            tbody.appendChild(newRow);
-
-            // Actualizar Contadores de KPIs
-            let proceso = parseInt(document.getElementById('kpi-proceso').textContent);
-            document.getElementById('kpi-proceso').textContent = Math.max(0, proceso - 1);
-
-            alert(`Registro #${id} marcado como FINALIZADO en Supabase.`);
-            // Aquí irá tu consulta: await supabase.from('visitas').update({ estado: 'finalizado', hora_salida: new Date() }).eq('id', id)
-        }
-    </script>
+    <script src="panel.js" defer></script>
 </body>
 
 </html>
