@@ -11,6 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const kpiProceso = document.getElementById('kpi-proceso');
     const kpiTotal = document.getElementById('kpi-total');
 
+    // Referencias de Notificaciones y Modales
+    const toastCentral = document.getElementById('toastCentral');
+    const toastIcon = document.getElementById('toastIcon');
+    const toastMessage = document.getElementById('toastMessage');
+
+    const modalConfirmacion = document.getElementById('modalConfirmacion');
+    const btnModalCancelar = document.getElementById('btnModalCancelar');
+    const btnModalAceptar = document.getElementById('btnModalAceptar');
+
+    // Variable temporal para guardar el ID a eliminar
+    let idParaEliminar = null;
+
     // Forzar fecha de hoy
     const hoy = new Date();
     const año = hoy.getFullYear();
@@ -22,6 +34,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cargarDatosPanel();
     dateFilter.addEventListener('change', cargarDatosPanel);
+
+    // 🔔 FUNCIÓN GLOBAL DE NOTIFICACIONES ESTILO TOAST
+    function mostrarNotificacion(mensaje, tipo = 'success') {
+        toastMessage.textContent = mensaje.toUpperCase();
+
+        if (tipo === 'error') {
+            toastCentral.classList.add('toast-error');
+            toastIcon.className = "ph ph-warning-circle";
+        } else if (tipo === 'delete') {
+            toastCentral.classList.remove('toast-error');
+            toastIcon.className = "ph ph-trash";
+        } else {
+            toastCentral.classList.remove('toast-error');
+            toastIcon.className = "ph ph-check-circle";
+        }
+
+        toastCentral.classList.add('show');
+
+        setTimeout(() => {
+            toastCentral.classList.remove('show');
+        }, 2500);
+    }
 
     function formatearSoloHora(timestampString) {
         if (!timestampString) return '--:--:--';
@@ -51,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarPaneles(data);
         } catch (error) {
             console.error('Error al recuperar registros de Supabase:', error);
-            activeListContainer.innerHTML = `<div style="color:red; padding:10px;">Error al conectar: ${error.message}</div>`;
+            mostrarNotificacion('Error de conexión con la base de datos', 'error');
         }
     }
 
@@ -82,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.className = 'visitante-row';
                 row.id = `vis-${reg.id}`;
 
-                // Estructura visual basada en el nuevo requerimiento de protagonismo
                 row.innerHTML = `
                     <div class="card-header-main">
                         <div class="empresa-title">${reg.empresa_proveedora || 'SIN EMPRESA'}</div>
@@ -114,11 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <div class="row-actions">
                         <button class="btn-action btn-delete" data-id="${reg.id}" title="Eliminar Registro Físico"><i class="ph ph-trash"></i></button>
-                        
                         <button class="btn-action btn-edit-toggle" data-id="${reg.id}" id="btn-toggle-${reg.id}" title="Habilitar Edición"><i class="ph ph-pencil"></i> Editar</button>
-                        
                         <button class="btn-action btn-ok" data-id="${reg.id}"><i class="ph ph-floppy-disk"></i> Guardar</button>
-                        
                         <button class="btn-action btn-fin" data-id="${reg.id}"><i class="ph ph-check"></i> Finalizar</button>
                     </div>
                 `;
@@ -147,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function asignarEventosBotones() {
-        // Lógica del Lápiz (Conmutar entre Vista Superficial y modo Edición)
+        // Lógica del Lápiz (Alternar Edición)
         document.querySelectorAll('.btn-edit-toggle').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-id');
@@ -163,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const estaDeshabilitado = camposAEditar[0].hasAttribute('disabled');
 
                 if (estaDeshabilitado) {
-                    // Activar modo edición
                     camposAEditar.forEach(campo => {
                         campo.removeAttribute('disabled');
                         campo.style.border = "1px solid var(--fc-blue)";
@@ -172,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.style.background = "#ffe4e6";
                     btn.style.color = "#b91c1c";
                 } else {
-                    // Cancelar y volver a bloquear sin guardar
                     camposAEditar.forEach(campo => {
                         campo.setAttribute('disabled', 'true');
                         campo.style.border = "1px solid transparent";
@@ -180,12 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.innerHTML = `<i class="ph ph-pencil"></i> Editar`;
                     btn.style.background = "#f1f5f9";
                     btn.style.color = "var(--text-muted)";
-                    cargarDatosPanel(); // Recarga para revertir cambios no guardados
+                    cargarDatosPanel();
                 }
             });
         });
 
-        // Guardar Cambios inline en Supabase
+        // Guardar Cambios inline
         document.querySelectorAll('.btn-ok').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
@@ -208,39 +236,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         .eq('id', id);
 
                     if (error) throw error;
-                    alert('¡Datos modificados guardados correctamente!');
+
+                    mostrarNotificacion('Cambios modificados con éxito');
                     cargarDatosPanel();
                 } catch (err) {
                     console.error('Error al guardar datos:', err);
-                    alert('No se pudieron actualizar los campos.');
+                    mostrarNotificacion('No se pudieron salvar los cambios', 'error');
                 }
             });
         });
 
-        // 🗑️ Botón Papelera de Reciclaje (Eliminar permanentemente de Supabase)
+        // 🗑️ Botón Papelera (Abre la nueva ventana flotante central)
         document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                const confirmacion = confirm(`¿Está seguro de que desea ELIMINAR permanentemente este registro del sistema? Esta acción no se puede deshacer.`);
-
-                if (!confirmacion) return;
-
-                try {
-                    const { error } = await supabase
-                        .from('registros_recepcion')
-                        .delete()
-                        .eq('id', id);
-
-                    if (error) throw error;
-                    cargarDatosPanel(); // Refresca la lista y los KPIs automáticamente
-                } catch (err) {
-                    console.error('Error al eliminar registro:', err);
-                    alert('No se pudo eliminar el registro seleccionado.');
-                }
+            btn.addEventListener('click', () => {
+                idParaEliminar = btn.getAttribute('data-id');
+                // Mostrar modal con animación fluida
+                modalConfirmacion.classList.add('show');
             });
         });
 
-        // Finalizar Entrada (Cambio de estado y seteo de hora de salida)
+        // Finalizar Entrada
         document.querySelectorAll('.btn-fin').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
@@ -257,12 +272,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         .eq('id', id);
 
                     if (error) throw error;
+
+                    mostrarNotificacion('Visita concluida correctamente');
                     cargarDatosPanel();
                 } catch (err) {
                     console.error('Error al finalizar visita:', err);
-                    alert('No se pudo procesar la salida.');
+                    mostrarNotificacion('No se pudo procesar la salida', 'error');
                 }
             });
         });
     }
+
+    // ⚡ EVENTOS CONTROLADORES DE LA VENTANA FLOTANTE MODAL
+    btnModalCancelar.addEventListener('click', () => {
+        modalConfirmacion.classList.remove('show');
+        idParaEliminar = null;
+    });
+
+    btnModalAceptar.addEventListener('click', async () => {
+        if (!idParaEliminar) return;
+
+        try {
+            const { error } = await supabase
+                .from('registros_recepcion')
+                .delete()
+                .eq('id', idParaEliminar);
+
+            if (error) throw error;
+
+            // Ocultar modal de inmediato
+            modalConfirmacion.classList.remove('show');
+
+            // Mostrar confirmación central azul/borrado y recargar
+            mostrarNotificacion('Registro eliminado del sistema', 'delete');
+            cargarDatosPanel();
+        } catch (err) {
+            console.error('Error al eliminar de Supabase:', err);
+            modalConfirmacion.classList.remove('show');
+            mostrarNotificacion('Error al intentar eliminar', 'error');
+        } finally {
+            idParaEliminar = null;
+        }
+    });
+
+    // Cerrar también si hacen clic fuera de la caja blanca del modal
+    modalConfirmacion.addEventListener('click', (e) => {
+        if (e.target === modalConfirmacion) {
+            modalConfirmacion.classList.remove('show');
+            idParaEliminar = null;
+        }
+    });
 });
