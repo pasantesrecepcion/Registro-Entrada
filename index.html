@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmacorp CEDIS - Registro de Ingreso</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
@@ -83,7 +84,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Fuerza visual de mayúsculas en los campos de escritura */
         input,
         select,
         textarea {
@@ -96,6 +96,10 @@
             color: var(--text-main);
             background-color: #f8fafc;
             transition: all 0.2s ease;
+        }
+
+        /* Mayúsculas exclusivas para el campo de Proveedor */
+        #empresa {
             text-transform: uppercase;
         }
 
@@ -154,10 +158,41 @@
         .hidden {
             display: none;
         }
+
+        .toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--fc-blue);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            opacity: 0;
+            z-index: 9999;
+            text-transform: uppercase;
+        }
+
+        .toast.show {
+            top: 30px;
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body>
+
+    <div id="toastNotification" class="toast">
+        <i class="ph ph-check-circle" style="font-size: 22px;"></i>
+        <span>¡Registro Exitoso!</span>
+    </div>
 
     <div class="form-container">
         <div class="header">
@@ -168,12 +203,11 @@
         <form id="registroForm">
             <div class="form-group">
                 <label for="nombre">Nombre Completo</label>
-                <input type="text" id="nombre" placeholder="EJ. JUAN PEREZ" required
-                    oninput="this.value = this.value.toUpperCase()">
+                <input type="text" id="nombre" placeholder="EJ. JUAN PEREZ" required>
             </div>
 
             <div class="form-group">
-                <label for="empresa">Empresa / Institución</label>
+                <label for="empresa">Empresa / Institución (Proveedor)</label>
                 <input type="text" id="empresa" placeholder="EJ. FARMACORP S.A." required
                     oninput="this.value = this.value.toUpperCase()">
             </div>
@@ -182,12 +216,12 @@
                 <div class="form-group">
                     <label for="documento">CI / Documento</label>
                     <input type="text" id="documento" placeholder="NUMERO DE DOCUMENTO" required
-                        oninput="this.value = this.value.toUpperCase()">
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
                 <div class="form-group">
                     <label for="telefono">Teléfono / Celular</label>
                     <input type="tel" id="telefono" placeholder="NUMERO DE CONTACTO" required
-                        oninput="this.value = this.value.toUpperCase()">
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
             </div>
 
@@ -201,16 +235,16 @@
                     <select id="puerta" required>
                         <option value="" disabled selected>SELECCIONE LA PUERTA</option>
                         <option value="PUERTA PRINCIPAL">PUERTA PRINCIPAL</option>
-                        <option value="PUERTA 1">PUERTA 1</option>
-                        <option value="PUERTA 2">PUERTA 2</option>
-                        <option value="PUERTA 3">PUERTA 3</option>
-                        <option value="PUERTA 4">PUERTA 4</option>
-                        <option value="PUERTA 5">PUERTA 5</option>
-                        <option value="PUERTA 6">PUERTA 6</option>
-                        <option value="PUERTA 7">PUERTA 7</option>
-                        <option value="PUERTA 8">PUERTA 8</option>
-                        <option value="PUERTA 9">PUERTA 9</option>
-                        <option value="PUERTA 10">PUERTA 10</option>
+                        <option value="PUERTA 1">Puerta 1</option>
+                        <option value="PUERTA 2">Puerta 2</option>
+                        <option value="PUERTA 3">Puerta 3</option>
+                        <option value="PUERTA 4">Puerta 4</option>
+                        <option value="PUERTA 5">Puerta 5</option>
+                        <option value="PUERTA 6">Puerta 6</option>
+                        <option value="PUERTA 7">Puerta 7</option>
+                        <option value="PUERTA 8">Puerta 8</option>
+                        <option value="PUERTA 9">Puerta 9</option>
+                        <option value="PUERTA 10">Puerta 10</option>
                     </select>
                 </div>
             </div>
@@ -236,11 +270,10 @@
 
             <div class="form-group hidden" id="grupo-otros">
                 <label for="otro_motivo">Especifique el Motivo</label>
-                <textarea id="otro_motivo" rows="2" placeholder="DESCRIBA BREVEMENTE EL MOTIVO..."
-                    oninput="this.value = this.value.toUpperCase()"></textarea>
+                <textarea id="otro_motivo" rows="2" placeholder="DESCRIBA BREVEMENTE EL MOTIVO..."></textarea>
             </div>
 
-            <button type="submit" class="btn-submit">Registrar Entrada</button>
+            <button type="submit" class="btn-submit" id="btnSubmit">Registrar Entrada</button>
             <a href="panel.html" class="btn-link">
                 <i class="ph ph-chart-bar"></i> Ir al Panel de Gestión (Monitoreo)
             </a>
@@ -248,7 +281,11 @@
     </div>
 
     <script>
-        // Mapeo dinámico de motivos según tu lista exacta
+        // CONFIGURACIÓN DE CREDENCIALES REALES
+        const SUPABASE_URL = "https://kdclsbscslklcypclohj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-jYliISAOxmckNHeoXMkpQ_7DIP0vp0";
+
+        // Mapeo nativo que funciona siempre
         const motivosPorArea = {
             logistica_inversa: [
                 { value: "NOTA DE CREDITO", text: "NOTA DE CRÉDITO" },
@@ -265,12 +302,8 @@
                 { value: "ENTREVISTA", text: "ENTREVISTA" },
                 { value: "OTROS", text: "OTROS" }
             ],
-            mantenimiento: [
-                { value: "OTROS", text: "OTROS" }
-            ],
-            otros: [
-                { value: "OTROS", text: "OTROS" }
-            ]
+            mantenimiento: [{ value: "OTROS", text: "OTROS" }],
+            otros: [{ value: "OTROS", text: "OTROS" }]
         };
 
         const areaSelect = document.getElementById('area');
@@ -278,6 +311,7 @@
         const grupoOtros = document.getElementById('grupo-otros');
         const otroMotivoInput = document.getElementById('otro_motivo');
 
+        // LÓGICA DE INTERFAZ (Aislada y protegida de errores externos)
         areaSelect.addEventListener('change', function () {
             const areaSeleccionada = this.value;
             motivoSelect.innerHTML = '<option value="" disabled selected>SELECCIONE EL MOTIVO</option>';
@@ -292,7 +326,6 @@
                 motivoSelect.disabled = false;
             }
 
-            // Si el área elegida es "MANTENIMIENTO" u "OTROS", automáticamente tienen "OTROS" como opción única
             if (areaSeleccionada === 'mantenimiento' || areaSeleccionada === 'otros') {
                 motivoSelect.value = "OTROS";
                 grupoOtros.classList.remove('hidden');
@@ -300,6 +333,7 @@
             } else {
                 grupoOtros.classList.add('hidden');
                 otroMotivoInput.required = false;
+                otroMotivoInput.value = "";
             }
         });
 
@@ -311,16 +345,71 @@
             } else {
                 grupoOtros.classList.add('hidden');
                 otroMotivoInput.required = false;
+                otroMotivoInput.value = "";
             }
         });
 
-        // Simulación envío de formulario
+        function mostrarToast() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        }
+
+        // ENVÍO AL ENTRAR EN ACCIÓN EL SUBMIT
         document.getElementById('registroForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            alert('¡REGISTRO EXITOSO CON DATOS EN MAYÚSCULAS!');
-            this.reset();
-            motivoSelect.disabled = true;
-            grupoOtros.classList.add('hidden');
+
+            // Inicialización tardía de Supabase para blindar el código
+            let supabaseClient = null;
+            try {
+                if (window.supabase && typeof window.supabase.createClient === 'function') {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+            } catch (err) {
+                console.error("Error al inicializar cliente Supabase:", err);
+            }
+
+            if (!supabaseClient || SUPABASE_URL.includes("TU_PROYECTO")) {
+                alert("Atención: No se pudo conectar a Supabase. Verifica la CDN o tus credenciales en el código.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = "PROCESANDO...";
+
+            const datosRegistro = {
+                nombre_completo: document.getElementById('nombre').value.trim(),
+                empresa_proveedora: document.getElementById('empresa').value.trim(),
+                documento_ci: document.getElementById('documento').value.trim(),
+                telefono: document.getElementById('telefono').value.trim() || null,
+                personas: parseInt(document.getElementById('personas').value) || 1,
+                puerta: document.getElementById('puerta').value,
+                area_destino: areaSelect.options[areaSelect.selectedIndex].text,
+                motivo_visita: motivoSelect.value,
+                motivo_otros_detalle: (motivoSelect.value === 'OTROS') ? (otroMotivoInput.value.trim() || "") : ""
+            };
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('registros_recepcion')
+                    .insert([datosRegistro]);
+
+                if (error) throw error;
+
+                mostrarToast();
+                this.reset();
+                grupoOtros.classList.add('hidden');
+                motivoSelect.innerHTML = '<option value="" disabled selected>-- ELIJA ÁREA PRIMERO --</option>';
+                motivoSelect.disabled = true;
+
+            } catch (err) {
+                console.error(err);
+                alert("Error al guardar en Supabase: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "REGISTRAR ENTRADA";
+            }
         });
     </script>
 </body>
