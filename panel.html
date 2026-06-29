@@ -288,6 +288,38 @@
             gap: 8px;
         }
 
+        /* Alineación para la cabecera que incluye el botón de Exportar */
+        .section-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title-container .section-title {
+            margin-bottom: 0;
+        }
+
+        .btn-export {
+            background-color: var(--fc-green);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            transition: background 0.2s ease;
+        }
+
+        .btn-export:hover {
+            background-color: #15803d;
+        }
+
         .main-panel,
         .history-panel {
             background: var(--bg-card);
@@ -429,12 +461,6 @@
             text-transform: uppercase;
         }
 
-        .row-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
         .btn-action {
             padding: 8px 14px;
             border: none;
@@ -519,7 +545,13 @@
         </div>
 
         <div class="history-panel">
-            <div class="section-title"><i class="ph ph-archive"></i> Historial de Salidas</div>
+            <div class="section-title-container">
+                <div class="section-title"><i class="ph ph-archive"></i> Historial de Salidas</div>
+                <button id="btn-exportar" class="btn-export">
+                    <i class="ph ph-file-xls" style="font-size: 16px;"></i> Exportar
+                </button>
+            </div>
+            
             <table class="history-table">
                 <thead>
                     <tr>
