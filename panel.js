@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const kpiProceso = document.getElementById('kpi-proceso');
     const kpiTotal = document.getElementById('kpi-total');
 
-    // Referencias de Notificaciones y Modales
+    // Referencias de Notificaciones, Modales y Botón Exportar
     const toastCentral = document.getElementById('toastCentral');
     const toastIcon = document.getElementById('toastIcon');
     const toastMessage = document.getElementById('toastMessage');
@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalConfirmacion = document.getElementById('modalConfirmacion');
     const btnModalCancelar = document.getElementById('btnModalCancelar');
     const btnModalAceptar = document.getElementById('btnModalAceptar');
+    const btnExportar = document.getElementById('btn-exportar');
 
     // Variable temporal para guardar el ID a eliminar
     let idParaEliminar = null;
@@ -250,7 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 idParaEliminar = btn.getAttribute('data-id');
-                // Mostrar modal con animación fluida
                 modalConfirmacion.classList.add('show');
             });
         });
@@ -300,10 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (error) throw error;
 
-            // Ocultar modal de inmediato
             modalConfirmacion.classList.remove('show');
-
-            // Mostrar confirmación central azul/borrado y recargar
             mostrarNotificacion('Registro eliminado del sistema', 'delete');
             cargarDatosPanel();
         } catch (err) {
@@ -315,11 +312,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Cerrar también si hacen clic fuera de la caja blanca del modal
     modalConfirmacion.addEventListener('click', (e) => {
         if (e.target === modalConfirmacion) {
             modalConfirmacion.classList.remove('show');
             idParaEliminar = null;
+        }
+    });
+
+    // 🟢 LÓGICA DE EXPORTACIÓN A EXCEL (CSV)
+    btnExportar.addEventListener('click', async () => {
+        try {
+            mostrarNotificacion('Preparando exportación...', 'success');
+            
+            // 1. Obtener la totalidad de los datos de la tabla desde Supabase
+            const { data, error } = await supabase
+                .from('registros_recepcion')
+                .select('*')
+                .order('fecha_corta', { ascending: false });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                mostrarNotificacion('No hay datos globales para exportar', 'error');
+                return;
+            }
+
+            // 2. Definir las columnas de cabecera en el Excel
+            const headers = ['ID', 'Fecha', 'Hora Entrada', 'Hora Salida', 'Nombre Completo', 'CI', 'Empresa', 'Personas', 'Puerta', 'Área Destino', 'Estado', 'Observaciones'];
+            
+            // 3. Transformar las filas de la DB a filas de Excel cuidando los nulos y comas
+            const rows = data.map(reg => [
+                reg.id,
+                reg.fecha_corta || '',
+                formatearSoloHora(reg.fecha_entrada),
+                reg.hora_salida || '',
+                `"${(reg.nombre_completo || '').replace(/"/g, '""')}"`, // Previene roturas por comas internas
+                reg.documento_ci || '',
+                `"${(reg.empresa_proveedora || '').replace(/"/g, '""')}"`,
+                reg.personas || 1,
+                reg.puerta || '',
+                `"${(reg.area_destino || '').replace(/"/g, '""')}"`,
+                reg.estado || 'EN PROCESO',
+                `"${(reg.observacion || '').replace(/"/g, '""')}"`
+            ]);
+
+            // 4. Construir la estructura CSV separada por punto y coma (Estándar Excel Latinoamericano)
+            const csvContent = [
+                headers.join(';'),
+                ...rows.map(e => e.join(';'))
+            ].join('\n');
+
+            // 5. Crear el blob con el BOM de UTF-8 para que Excel reconozca eñes y caracteres especiales
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // 6. Ejecutar descarga virtual invisibly
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Reporte_Recepcion_CEDIS_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            mostrarNotificacion('Base de datos descargada');
+        } catch (err) {
+            console.error('Error al exportar los datos:', err);
+            mostrarNotificacion('Error al exportar registros', 'error');
         }
     });
 });
